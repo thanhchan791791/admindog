@@ -18,21 +18,21 @@
       text-align: center;
       color: #ff69b4;
       font-size: 2em;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
       text-shadow: 1px 1px #fff;
     }
 
     #notification {
-      background-color: #fff0f7;
-      border-left: 6px solid #ff69b4;
-      padding: 14px 18px;
-      margin: 20px auto;
-      border-radius: 8px;
-      color: #d94f85;
+      background-color: #fff7fa;
+      border: 2px dashed #ff94c2;
+      color: #c63565;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 10px auto 30px auto;
+      text-align: center;
       font-size: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      max-width: 700px;
-      display: block;
+      max-width: 600px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
 
     .search-box {
@@ -138,10 +138,10 @@
 <body>
   <h1>🔧 Quản lý trạng thái bé cún yêu 🐶</h1>
 
-  <!-- Ô thông báo -->
+  <!-- 🔔 Ô thông báo -->
   <div id="notification">
     <strong>🔔 THÔNG BÁO:</strong><br>
-    <span id="notification-content">📸 Khách vừa chọn bé Corgi để chụp hình lúc 14:32:17</span>
+    📸 Khách vừa chọn bé <strong>Corgi</strong> để chụp hình lúc <strong>14:32:17</strong>
   </div>
 
   <!-- Ô tìm kiếm -->
@@ -182,8 +182,6 @@
     const db = firebase.database();
     const tableBody = document.getElementById("dog-table-body");
     const searchInput = document.getElementById("searchInput");
-    const notificationBox = document.getElementById("notification");
-    const notificationContent = document.getElementById("notification-content");
 
     let allDogs = {};
 
@@ -222,30 +220,13 @@
     function toggleStatus(dogId, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
       db.ref("dogs/" + dogId).update({ status: newStatus })
+        .then(() => {
+          // tự cập nhật qua Firebase real-time
+        })
         .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
 
-    function listenForSelections() {
-      db.ref("chosenDogs").on("child_added", snapshot => {
-        const data = snapshot.val();
-        if (data && data.dogName) {
-          const time = new Date(data.timestamp || Date.now()).toLocaleTimeString();
-          showNotification(`📸 Khách vừa chọn bé ${data.dogName} để chụp hình lúc ${time}`);
-        }
-      });
-    }
-
-    function showNotification(message) {
-      notificationContent.textContent = message;
-      notificationBox.style.display = "block";
-
-      setTimeout(() => {
-        notificationBox.style.display = "none";
-      }, 10000); // 10 giây
-    }
-
     loadDogs();
-    listenForSelections();
   </script>
 </body>
 </html>
