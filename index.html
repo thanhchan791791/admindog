@@ -32,7 +32,7 @@
       max-height: 250px;
       overflow-y: auto;
     }
-    .clear-btn {
+    .clear-btn, .add-btn {
       background-color: #ff4d6d;
       color: white;
       border: none;
@@ -40,8 +40,10 @@
       border-radius: 20px;
       font-size: 15px;
       cursor: pointer;
-      margin: 10px auto;
-      display: block;
+      margin: 10px 5px;
+    }
+    .action-buttons {
+      text-align: center;
     }
     .search-box {
       display: flex;
@@ -119,23 +121,58 @@
     .inactive-btn {
       background: linear-gradient(to right, #f85032, #e73827);
     }
+    .edit-btn {
+      background-color: #f9a825;
+      margin-right: 5px;
+    }
+    .delete-btn {
+      background-color: #d32f2f;
+    }
+    #dog-form {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      padding: 20px;
+      border: 2px solid #ff69b4;
+      border-radius: 20px;
+      z-index: 1000;
+    }
+    #dog-form input {
+      display: block;
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
   <h1>🔧 Cập nhật chó xuống chơi trong ca 🐶</h1>
 
-  <!-- THÔNG BÁO -->
   <div id="notification">🔔 Đang tải thông báo...</div>
-  <button class="clear-btn" onclick="clearNotifications()">🗑️ Xóa tất cả thông báo</button>
+  <div class="action-buttons">
+    <button class="clear-btn" onclick="clearNotifications()">🗑️ Xóa tất cả thông báo</button>
+    <button class="add-btn" onclick="openForm()">➕ Thêm chó mới</button>
+  </div>
 
-  <!-- TÌM KIẾM -->
   <div class="search-box">
     <div class="search-wrapper">
       <input type="text" id="searchInput" placeholder="🔍 Gõ tên bé cún cần tìm..." oninput="renderFilteredDogs()" />
     </div>
   </div>
 
-  <!-- BẢNG -->
   <table>
     <thead>
       <tr>
@@ -149,7 +186,17 @@
     <tbody id="dog-table-body"></tbody>
   </table>
 
-  <!-- Firebase SDK -->
+  <div id="overlay" onclick="closeForm()"></div>
+  <div id="dog-form">
+    <h3 id="form-title">Thêm chó</h3>
+    <input type="text" id="dog-name" placeholder="Tên" />
+    <input type="text" id="dog-breed" placeholder="Giống" />
+    <input type="text" id="dog-image" placeholder="Link ảnh" />
+    <input type="hidden" id="dog-id" />
+    <button onclick="submitDog()">Lưu</button>
+    <button onclick="closeForm()">Huỷ</button>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
@@ -167,6 +214,8 @@
     const tableBody = document.getElementById("dog-table-body");
     const searchInput = document.getElementById("searchInput");
     const notificationBox = document.getElementById("notification");
+    const overlay = document.getElementById("overlay");
+    const dogForm = document.getElementById("dog-form");
 
     let allDogs = {};
 
@@ -196,6 +245,8 @@
               onclick="toggleStatus('${id}', '${dog.status}')">
               ${dog.status === 'play' ? '🌙 Cho nghỉ' : '☀️ Xuống chơi'}
             </button>
+            <button class="edit-btn" onclick="editDog('${id}')">✏️</button>
+            <button class="delete-btn" onclick="deleteDog('${id}')">🗑️</button>
           </td>
         `;
         tableBody.appendChild(tr);
@@ -204,8 +255,52 @@
 
     function toggleStatus(dogId, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
-      db.ref("dogs/" + dogId).update({ status: newStatus })
-        .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
+      db.ref("dogs/" + dogId).update({ status: newStatus });
+    }
+
+    function openForm(id = "") {
+      overlay.style.display = "block";
+      dogForm.style.display = "block";
+      document.getElementById("dog-id").value = id;
+      if (id && allDogs[id]) {
+        document.getElementById("form-title").innerText = "Sửa thông tin chó";
+        document.getElementById("dog-name").value = allDogs[id].name || "";
+        document.getElementById("dog-breed").value = allDogs[id].breed || "";
+        document.getElementById("dog-image").value = allDogs[id].image || "";
+      } else {
+        document.getElementById("form-title").innerText = "Thêm chó mới";
+        document.getElementById("dog-name").value = "";
+        document.getElementById("dog-breed").value = "";
+        document.getElementById("dog-image").value = "";
+      }
+    }
+
+    function closeForm() {
+      overlay.style.display = "none";
+      dogForm.style.display = "none";
+    }
+
+    function submitDog() {
+      const id = document.getElementById("dog-id").value;
+      const name = document.getElementById("dog-name").value;
+      const breed = document.getElementById("dog-breed").value;
+      const image = document.getElementById("dog-image").value;
+      const data = { name, breed, image, status: "rest" };
+
+      if (id) db.ref("dogs/" + id).update(data);
+      else db.ref("dogs").push(data);
+
+      closeForm();
+    }
+
+    function deleteDog(id) {
+      if (confirm("Bạn có chắc muốn xóa chú chó này không?")) {
+        db.ref("dogs/" + id).remove();
+      }
+    }
+
+    function editDog(id) {
+      openForm(id);
     }
 
     function formatTime(input) {
@@ -225,20 +320,18 @@
       db.ref("photoRequests").limitToLast(10).on("value", snapshot => {
         const data = snapshot.val();
         if (!data) {
-          notificationBox.innerHTML = "📭 Chưa có thông báo nào.";
+          notificationBox.innerHTML = "📥 Chưa có thông báo nào.";
           return;
         }
 
         const list = Object.values(data);
         const messages = list.map(item => {
           let names = [];
-
           if (Array.isArray(item.selectedDogs)) {
             names = item.selectedDogs.filter(n => !!n);
           } else if (item.dog) {
             names.push(item.dog);
           }
-
           const timeText = formatTime(item.time || item.timestamp);
           return names.length > 0
             ? `📸 Khách vừa chọn <strong>${names.join(", ")}</strong> lúc <strong>${timeText}</strong>`
@@ -247,15 +340,13 @@
 
         notificationBox.innerHTML = messages.length > 0
           ? "🔔 <strong>THÔNG BÁO:</strong><br>" + messages.reverse().join("<br>—<br>")
-          : "📭 Không có thông tin hợp lệ để hiển thị.";
+          : "📥 Không có thông tin hợp lệ để hiển thị.";
       });
     }
 
     function clearNotifications() {
-      if (confirm("❗Bạn có chắc muốn xóa tất cả thông báo không?")) {
-        db.ref("photoRequests").remove()
-          .then(() => alert("✅ Đã xóa tất cả thông báo."))
-          .catch(err => alert("❌ Lỗi khi xóa: " + err.message));
+      if (confirm("❗️Bạn có chắc muốn xóa tất cả thông báo không?")) {
+        db.ref("photoRequests").remove();
       }
     }
 
