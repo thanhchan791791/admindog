@@ -75,24 +75,10 @@
       color: #d94f85;
     }
 
-    .search-wrapper input::placeholder {
-      color: #d88fa9;
-    }
-
-    .search-wrapper::after {
-      content: "🔍";
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 18px;
-      pointer-events: none;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
+      margin-top: 10px;
       background-color: white;
       border-radius: 12px;
       overflow: hidden;
@@ -141,51 +127,62 @@
       background: linear-gradient(to right, #f85032, #e73827);
     }
 
-    #formModal {
-      display: none;
+    .form-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+
+    .form-popup input {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .form-popup button {
+      margin-top: 10px;
+    }
+
+    .overlay {
       position: fixed;
       top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: #00000077;
-      align-items: center;
-      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
       z-index: 999;
     }
 
-    #formModal .form-box {
-      background: white;
-      padding: 30px;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
-    }
-
-    #formModal input, #formModal select {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0 15px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-    }
   </style>
 </head>
 <body>
   <h1>🔧 Cập nhật chó xuống chơi trong ca 🐶</h1>
 
-  <div style="text-align: center; margin-bottom: 10px;">
-    <button onclick="openDogForm()" style="background:#00b894; color:white; padding:10px 20px; border:none; border-radius:20px; font-weight:bold;">➕ Thêm chó</button>
-  </div>
-
+  <!-- THÔNG BÁO -->
   <div id="notification">🔔 Đang tải thông báo...</div>
   <button class="clear-btn" onclick="clearNotifications()">🗑️ Xóa tất cả thông báo</button>
 
+  <!-- Ô tìm kiếm -->
   <div class="search-box">
     <div class="search-wrapper">
       <input type="text" id="searchInput" placeholder="🔍 Gõ tên bé cún cần tìm..." oninput="renderFilteredDogs()" />
     </div>
   </div>
 
+  <!-- Nút thêm chó -->
+  <div style="text-align: right; margin: 10px 0;">
+    <button onclick="openDogForm()" style="background:#00b894; color:white;">➕ Thêm chó</button>
+  </div>
+
+  <!-- BẢNG DANH SÁCH -->
   <table>
     <thead>
       <tr>
@@ -194,32 +191,25 @@
         <th>Giống</th>
         <th>Trạng thái</th>
         <th>Hành động</th>
-        <th>✏️</th>
+        <th>🛠️ Sửa</th>
+        <th>🗑️</th>
       </tr>
     </thead>
     <tbody id="dog-table-body"></tbody>
   </table>
 
-  <!-- FORM MODAL -->
-  <div id="formModal">
-    <div class="form-box">
-      <h2 id="formTitle">📝 Nhập thông tin chó</h2>
-      <label>Tên:</label>
-      <input id="dogName">
-      <label>Giống:</label>
-      <input id="dogBreed">
-      <label>Ảnh (URL):</label>
-      <input id="dogImage">
-      <label>Trạng thái:</label>
-      <select id="dogStatus">
-        <option value="play">☀️ Đang chơi</option>
-        <option value="rest">🌙 Nghỉ ngơi</option>
-      </select>
-      <button onclick="saveDog()" style="background:#27ae60; color:white;">💾 Lưu</button>
-      <button onclick="closeForm()" style="background:#b2bec3; color:black; margin-left:10px;">❌ Hủy</button>
-    </div>
+  <!-- Form thêm/sửa -->
+  <div id="popupForm" class="form-popup" style="display:none;">
+    <h3 id="formTitle">Thêm chó</h3>
+    <input type="text" id="dogName" placeholder="Tên chó" />
+    <input type="text" id="dogBreed" placeholder="Giống chó" />
+    <input type="text" id="dogImage" placeholder="URL ảnh" />
+    <button onclick="saveDog()">💾 Lưu</button>
+    <button onclick="closeDogForm()" style="background:#ccc;color:black;">Đóng</button>
   </div>
+  <div id="overlay" class="overlay" style="display:none;" onclick="closeDogForm()"></div>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
@@ -232,15 +222,13 @@
       messagingSenderId: "1003873040746",
       appId: "1:1003873040746:web:607f4ff587afc430d3cd13"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const tableBody = document.getElementById("dog-table-body");
     const searchInput = document.getElementById("searchInput");
     const notificationBox = document.getElementById("notification");
 
-    let allDogs = {};
-    let editingDogId = null;
+    let allDogs = {}, editingId = null;
 
     function loadDogs() {
       db.ref("dogs").on("value", snapshot => {
@@ -252,11 +240,9 @@
     function renderFilteredDogs() {
       const keyword = searchInput.value.toLowerCase().trim();
       tableBody.innerHTML = "";
-
       for (const id in allDogs) {
         const dog = allDogs[id];
         if (!dog.name.toLowerCase().includes(keyword)) continue;
-
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td><img src="${dog.image || '#'}" alt="${dog.name}"></td>
@@ -270,7 +256,10 @@
             </button>
           </td>
           <td>
-            <button onclick="openDogForm('${id}')" style="background:#fab1a0; color:white;">✏️</button>
+            <button onclick="editDog('${id}')" style="background:#0984e3;">✏️</button>
+          </td>
+          <td>
+            <button onclick="deleteDog('${id}')" style="background:#d63031;">🗑️</button>
           </td>
         `;
         tableBody.appendChild(tr);
@@ -279,19 +268,7 @@
 
     function toggleStatus(dogId, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
-      db.ref("dogs/" + dogId).update({ status: newStatus })
-        .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
-    }
-
-    function formatTime(input) {
-      const date = new Date(input);
-      if (isNaN(date.getTime())) return input;
-      date.setUTCHours(date.getUTCHours() + 7);
-      const h = date.getHours().toString().padStart(2, "0");
-      const m = date.getMinutes().toString().padStart(2, "0");
-      const d = date.getDate().toString().padStart(2, "0");
-      const mo = (date.getMonth() + 1).toString().padStart(2, "0");
-      return `${h}h${m}p - ${d}/${mo}`;
+      db.ref("dogs/" + dogId).update({ status: newStatus });
     }
 
     function loadNotifications() {
@@ -301,87 +278,78 @@
           notificationBox.innerHTML = "📭 Chưa có thông báo nào.";
           return;
         }
-
         const list = Object.values(data);
         const messages = list.map(item => {
           let names = [];
-
-          if (Array.isArray(item.selectedDogs)) {
-            names = item.selectedDogs.filter(n => !!n);
-          } else if (item.dog) {
-            names.push(item.dog);
-          }
-
+          if (Array.isArray(item.selectedDogs)) names = item.selectedDogs.filter(n => !!n);
+          else if (item.dog) names.push(item.dog);
           const timeText = formatTime(item.time || item.timestamp);
-          return names.length > 0
-            ? `📸 Khách vừa chọn <strong>${names.join(", ")}</strong> lúc <strong>${timeText}</strong>`
-            : null;
+          return names.length > 0 ? `📸 Khách vừa chọn <strong>${names.join(", ")}</strong> lúc <strong>${timeText}</strong>` : null;
         }).filter(Boolean);
-
         notificationBox.innerHTML = messages.length > 0
           ? "🔔 <strong>THÔNG BÁO:</strong><br>" + messages.reverse().join("<br>—<br>")
           : "📭 Không có thông tin hợp lệ để hiển thị.";
       });
     }
 
+    function formatTime(input) {
+      const date = new Date(input);
+      if (isNaN(date.getTime())) return input;
+      date.setUTCHours(date.getUTCHours() + 7);
+      return `${date.getHours()}h${date.getMinutes().toString().padStart(2,"0")}p - ${date.getDate()}/${date.getMonth()+1}`;
+    }
+
     function clearNotifications() {
       if (confirm("❗Bạn có chắc muốn xóa tất cả thông báo không?")) {
         db.ref("photoRequests").remove()
-          .then(() => alert("✅ Đã xóa tất cả thông báo."))
-          .catch(err => alert("❌ Lỗi khi xóa: " + err.message));
+          .then(() => alert("✅ Đã xóa tất cả thông báo."));
       }
     }
 
-    function openDogForm(dogId = null) {
-      editingDogId = dogId;
-      const modal = document.getElementById("formModal");
-      const title = document.getElementById("formTitle");
-      const name = document.getElementById("dogName");
-      const breed = document.getElementById("dogBreed");
-      const image = document.getElementById("dogImage");
-      const status = document.getElementById("dogStatus");
-
-      if (dogId && allDogs[dogId]) {
-        const dog = allDogs[dogId];
-        name.value = dog.name || "";
-        breed.value = dog.breed || "";
-        image.value = dog.image || "";
-        status.value = dog.status || "rest";
-        title.innerText = "✏️ Sửa thông tin chó";
-      } else {
-        name.value = "";
-        breed.value = "";
-        image.value = "";
-        status.value = "rest";
-        title.innerText = "➕ Thêm chó mới";
-      }
-
-      modal.style.display = "flex";
+    function openDogForm() {
+      editingId = null;
+      document.getElementById("formTitle").innerText = "Thêm chó";
+      document.getElementById("dogName").value = "";
+      document.getElementById("dogBreed").value = "";
+      document.getElementById("dogImage").value = "";
+      document.getElementById("popupForm").style.display = "block";
+      document.getElementById("overlay").style.display = "block";
     }
 
-    function closeForm() {
-      document.getElementById("formModal").style.display = "none";
-      editingDogId = null;
+    function editDog(id) {
+      const dog = allDogs[id];
+      editingId = id;
+      document.getElementById("formTitle").innerText = "Sửa thông tin chó";
+      document.getElementById("dogName").value = dog.name || "";
+      document.getElementById("dogBreed").value = dog.breed || "";
+      document.getElementById("dogImage").value = dog.image || "";
+      document.getElementById("popupForm").style.display = "block";
+      document.getElementById("overlay").style.display = "block";
+    }
+
+    function closeDogForm() {
+      document.getElementById("popupForm").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
     }
 
     function saveDog() {
       const name = document.getElementById("dogName").value.trim();
       const breed = document.getElementById("dogBreed").value.trim();
       const image = document.getElementById("dogImage").value.trim();
-      const status = document.getElementById("dogStatus").value;
-
-      if (!name) return alert("❗Vui lòng nhập tên chó");
-
-      const dogData = { name, breed, image, status };
-
-      if (editingDogId) {
-        db.ref("dogs/" + editingDogId).update(dogData)
-          .then(() => closeForm())
-          .catch(err => alert("❌ Lỗi khi lưu: " + err.message));
+      if (!name) return alert("❗Vui lòng nhập tên chó.");
+      const data = { name, breed, image, status: "rest" };
+      if (editingId) {
+        db.ref("dogs/" + editingId).update(data);
       } else {
-        db.ref("dogs").push(dogData)
-          .then(() => closeForm())
-          .catch(err => alert("❌ Lỗi khi thêm: " + err.message));
+        const newId = db.ref("dogs").push().key;
+        db.ref("dogs/" + newId).set(data);
+      }
+      closeDogForm();
+    }
+
+    function deleteDog(id) {
+      if (confirm("❗Bạn có chắc muốn xóa bé chó này không?")) {
+        db.ref("dogs/" + id).remove();
       }
     }
 
