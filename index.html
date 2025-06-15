@@ -214,8 +214,12 @@
 
     function formatTime(timeOrTimestamp) {
       if (!timeOrTimestamp) return "không rõ thời gian";
-      if (typeof timeOrTimestamp === 'string') return timeOrTimestamp;
+
       const date = new Date(timeOrTimestamp);
+      if (isNaN(date.getTime())) return timeOrTimestamp;
+
+      date.setHours(date.getHours() + 7); // Chuyển sang giờ Việt Nam (UTC+7)
+
       const h = date.getHours().toString().padStart(2, "0");
       const m = date.getMinutes().toString().padStart(2, "0");
       return `${h}h${m}p`;
