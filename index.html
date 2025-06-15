@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Comic Sans MS', 'Segoe UI', cursive, sans-serif;
-      background: linear-gradient(to right, #fff1f9, #ffe6f0);
+      background: #ffe6f0;
       padding: 20px;
       max-width: 1000px;
       margin: auto;
@@ -241,18 +241,17 @@
         const allMessages = [];
 
         list.forEach(item => {
-          const time = item.time || item.timestamp || "chưa rõ thời gian";
+          const time = item.time || item.timestamp || "không rõ thời gian";
+          let dogNames = [];
 
-          if (item.dog) {
-            allMessages.push(`📸 Khách vừa chọn bé <strong>${item.dog}</strong> để chụp hình lúc <strong>${time}</strong>`);
+          if (item.dog) dogNames.push(item.dog);
+          if (Array.isArray(item.selectedDogs)) {
+            dogNames = dogNames.concat(item.selectedDogs.filter(name => !!name));
           }
 
-          if (Array.isArray(item.selectedDogs)) {
-            item.selectedDogs.forEach(dogName => {
-              if (dogName) {
-                allMessages.push(`📸 Khách vừa chọn bé <strong>${dogName}</strong> để chụp hình lúc <strong>${time}</strong>`);
-              }
-            });
+          if (dogNames.length > 0) {
+            const formattedNames = dogNames.join(", ");
+            allMessages.push(`📸 Khách vừa chọn các bé <strong>${formattedNames}</strong> lúc <strong>${time}</strong>`);
           }
         });
 
