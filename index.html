@@ -212,17 +212,18 @@
         .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
 
-    function formatTime(timeOrTimestamp) {
-      if (!timeOrTimestamp) return "không rõ thời gian";
+    function formatTime(input) {
+      const date = new Date(input);
+      if (isNaN(date.getTime())) return input;
 
-      const date = new Date(timeOrTimestamp);
-      if (isNaN(date.getTime())) return timeOrTimestamp;
-
-      date.setHours(date.getHours() + 7); // Chuyển sang giờ Việt Nam (UTC+7)
+      // Giờ Việt Nam = UTC + 7
+      date.setUTCHours(date.getUTCHours() + 7);
 
       const h = date.getHours().toString().padStart(2, "0");
       const m = date.getMinutes().toString().padStart(2, "0");
-      return `${h}h${m}p`;
+      const d = date.getDate().toString().padStart(2, "0");
+      const mo = (date.getMonth() + 1).toString().padStart(2, "0");
+      return `${h}h${m}p - ${d}/${mo}`;
     }
 
     function loadNotifications() {
@@ -255,7 +256,7 @@
       });
     }
 
-    // Khởi chạy
+    // Bắt đầu tải dữ liệu
     loadDogs();
     loadNotifications();
   </script>
