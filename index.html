@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🐶 Quản lý trạng thái chó</title>
+  <title>🌶 Quản lý trạng thái chó</title>
   <style>
     body {
       font-family: 'Comic Sans MS', cursive;
@@ -112,6 +112,7 @@
       cursor: pointer;
       color: white;
       transition: 0.3s;
+      margin: 2px;
     }
     .active-btn {
       background: linear-gradient(to right, #63d471, #233329);
@@ -119,23 +120,42 @@
     .inactive-btn {
       background: linear-gradient(to right, #f85032, #e73827);
     }
+    .edit-btn {
+      background-color: #ffb84d;
+    }
+    .delete-btn {
+      background-color: #e60039;
+    }
+    .add-form {
+      margin-top: 30px;
+      background: #fff0f5;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .add-form input {
+      padding: 10px;
+      border: 2px solid #ffb6c1;
+      border-radius: 10px;
+      margin: 5px;
+    }
+    .add-form button {
+      background-color: #28a745;
+    }
   </style>
 </head>
 <body>
   <h1>🔧 Cập nhật chó xuống chơi trong ca 🐶</h1>
 
-  <!-- THÔNG BÁO -->
   <div id="notification">🔔 Đang tải thông báo...</div>
   <button class="clear-btn" onclick="clearNotifications()">🗑️ Xóa tất cả thông báo</button>
 
-  <!-- TÌM KIẾM -->
   <div class="search-box">
     <div class="search-wrapper">
       <input type="text" id="searchInput" placeholder="🔍 Gõ tên bé cún cần tìm..." oninput="renderFilteredDogs()" />
     </div>
   </div>
 
-  <!-- BẢNG -->
   <table>
     <thead>
       <tr>
@@ -149,25 +169,23 @@
     <tbody id="dog-table-body"></tbody>
   </table>
 
-  <!-- Firebase SDK -->
+  <div class="add-form">
+    <h3>+ Thêm bé chó</h3>
+    <input type="text" id="newName" placeholder="Tên">
+    <input type="text" id="newBreed" placeholder="Giống">
+    <input type="text" id="newImage" placeholder="Link ảnh">
+    <button onclick="addDog()">➕ Thêm</button>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBNB1acbPtKox8eTjth3FtWuDOLhueRIys",
-      authDomain: "dogs-be72b.firebaseapp.com",
-      databaseURL: "https://dogs-be72b-default-rtdb.firebaseio.com",
-      projectId: "dogs-be72b",
-      storageBucket: "dogs-be72b.appspot.com",
-      messagingSenderId: "1003873040746",
-      appId: "1:1003873040746:web:607f4ff587afc430d3cd13"
-    };
+    const firebaseConfig = { /* your firebase config */ };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const tableBody = document.getElementById("dog-table-body");
     const searchInput = document.getElementById("searchInput");
     const notificationBox = document.getElementById("notification");
-
     let allDogs = {};
 
     function loadDogs() {
@@ -180,11 +198,9 @@
     function renderFilteredDogs() {
       const keyword = searchInput.value.toLowerCase().trim();
       tableBody.innerHTML = "";
-
       for (const id in allDogs) {
         const dog = allDogs[id];
         if (!dog.name.toLowerCase().includes(keyword)) continue;
-
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td><img src="${dog.image || '#'}" alt="${dog.name}"></td>
@@ -192,20 +208,43 @@
           <td>${dog.breed || 'Không rõ'}</td>
           <td>${dog.status === 'play' ? '☀️ Đang chơi' : '🌙 Nghỉ ngơi'}</td>
           <td>
-            <button class="${dog.status === 'play' ? 'inactive-btn' : 'active-btn'}"
-              onclick="toggleStatus('${id}', '${dog.status}')">
+            <button class="${dog.status === 'play' ? 'inactive-btn' : 'active-btn'}" onclick="toggleStatus('${id}', '${dog.status}')">
               ${dog.status === 'play' ? '🌙 Cho nghỉ' : '☀️ Xuống chơi'}
             </button>
-          </td>
-        `;
+            <button class="edit-btn" onclick="editDog('${id}')">Sửa</button>
+            <button class="delete-btn" onclick="deleteDog('${id}')">Xóa</button>
+          </td>`;
         tableBody.appendChild(tr);
       }
     }
 
     function toggleStatus(dogId, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
-      db.ref("dogs/" + dogId).update({ status: newStatus })
-        .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
+      db.ref("dogs/" + dogId).update({ status: newStatus });
+    }
+
+    function addDog() {
+      const name = document.getElementById("newName").value;
+      const breed = document.getElementById("newBreed").value;
+      const image = document.getElementById("newImage").value;
+      if (!name) return alert("Vui lòng nhập tên!");
+      const newDogRef = db.ref("dogs").push();
+      newDogRef.set({ name, breed, image, status: "rest" });
+    }
+
+    function editDog(id) {
+      const name = prompt("Nhập tên mới", allDogs[id].name);
+      const breed = prompt("Nhập giống mới", allDogs[id].breed);
+      const image = prompt("Nhập link ảnh mới", allDogs[id].image);
+      if (name && breed) {
+        db.ref("dogs/" + id).update({ name, breed, image });
+      }
+    }
+
+    function deleteDog(id) {
+      if (confirm("Xác nhận xóa?")) {
+        db.ref("dogs/" + id).remove();
+      }
     }
 
     function formatTime(input) {
@@ -225,34 +264,28 @@
       db.ref("photoRequests").limitToLast(10).on("value", snapshot => {
         const data = snapshot.val();
         if (!data) {
-          notificationBox.innerHTML = "📭 Chưa có thông báo nào.";
+          notificationBox.innerHTML = "📬 Chưa có thông báo nào.";
           return;
         }
-
         const list = Object.values(data);
         const messages = list.map(item => {
           let names = [];
-
           if (Array.isArray(item.selectedDogs)) {
             names = item.selectedDogs.filter(n => !!n);
           } else if (item.dog) {
             names.push(item.dog);
           }
-
           const timeText = formatTime(item.time || item.timestamp);
-          return names.length > 0
-            ? `📸 Khách vừa chọn <strong>${names.join(", ")}</strong> lúc <strong>${timeText}</strong>`
-            : null;
+          return names.length > 0 ? `📸 Khách vừa chọn <strong>${names.join(", ")}</strong> lúc <strong>${timeText}</strong>` : null;
         }).filter(Boolean);
-
         notificationBox.innerHTML = messages.length > 0
           ? "🔔 <strong>THÔNG BÁO:</strong><br>" + messages.reverse().join("<br>—<br>")
-          : "📭 Không có thông tin hợp lệ để hiển thị.";
+          : "📬 Không có thông tin hợp lệ để hiển thị.";
       });
     }
 
     function clearNotifications() {
-      if (confirm("❗Bạn có chắc muốn xóa tất cả thông báo không?")) {
+      if (confirm("❗️Bạn có chắc muốn xóa tất cả thông báo không?")) {
         db.ref("photoRequests").remove()
           .then(() => alert("✅ Đã xóa tất cả thông báo."))
           .catch(err => alert("❌ Lỗi khi xóa: " + err.message));
