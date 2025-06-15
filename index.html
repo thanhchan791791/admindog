@@ -228,6 +228,13 @@
         .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
 
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const h = date.getHours().toString().padStart(2, "0");
+      const m = date.getMinutes().toString().padStart(2, "0");
+      return `${h}h${m}p`;
+    }
+
     function loadNotifications() {
       db.ref("photoRequests").limitToLast(10).on("value", snapshot => {
         const data = snapshot.val();
@@ -238,23 +245,26 @@
 
         const list = Object.values(data);
         const messages = list.map(item => {
-          let name = item.dog || (Array.isArray(item.selectedDogs) && item.selectedDogs[0]);
-          if (!name) return null;
+          let names = [];
 
-          // Chuyển đổi timestamp sang định dạng 14h38p
-          let timeStr = "";
-          if (item.timestamp) {
-            const date = new Date(item.timestamp);
-            const h = date.getHours().toString().padStart(2, "0");
-            const m = date.getMinutes().toString().padStart(2, "0");
-            timeStr = `${h}h${m}p`;
-          } else if (item.time) {
-            timeStr = item.time;
-          } else {
-            timeStr = "không rõ giờ";
+          if (item.selectedDogs && Array.isArray(item.selectedDogs)) {
+            names = item.selectedDogs.filter(Boolean);
+          } else if (item.dog) {
+            names = [item.dog];
           }
 
-          return `📸 Khách đã chọn bé <strong>${name}</strong> để chụp hình lúc <strong>${timeStr}</strong>`;
+          if (names.length === 0) return null;
+
+          const nameText = names.map(name => `<strong>${name}</strong>`).join(", ");
+
+          let timeStr = "không rõ giờ";
+          if (item.timestamp) {
+            timeStr = formatTime(item.timestamp);
+          } else if (item.time) {
+            timeStr = item.time;
+          }
+
+          return `📸 Khách đã chọn bé ${nameText} để chụp hình lúc <strong>${timeStr}</strong>`;
         }).filter(Boolean);
 
         notificationBox.innerHTML = messages.length > 0
