@@ -69,7 +69,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
-    // Cấu hình Firebase (thay bằng thông tin thật của bạn)
+    // Cấu hình Firebase (thay bằng thông tin thật)
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -84,12 +84,22 @@
     const db = firebase.database();
     const notificationBox = document.getElementById("notificationBox");
 
-    // Hàm định dạng giờ:phút từ timestamp
-    function formatTime(timestamp) {
-      const date = new Date(timestamp);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      return `${hours}h${minutes}p`;
+    function formatTime(input) {
+      let date;
+
+      if (typeof input === 'number') {
+        date = new Date(input);
+      } else if (typeof input === 'string') {
+        date = new Date(Date.parse(input));
+      } else {
+        return "không rõ giờ";
+      }
+
+      if (isNaN(date.getTime())) return "không rõ giờ";
+
+      const h = date.getHours().toString().padStart(2, "0");
+      const m = date.getMinutes().toString().padStart(2, "0");
+      return `${h}h${m}p`;
     }
 
     function loadNotifications() {
@@ -117,8 +127,8 @@
           let timeStr = "không rõ giờ";
           if (item.timestamp) {
             timeStr = formatTime(item.timestamp);
-          } else if (item.time && typeof item.time === 'string') {
-            timeStr = item.time; // giả định đã đúng định dạng
+          } else if (item.time) {
+            timeStr = item.time;
           }
 
           return `📸 Khách đã chọn bé ${nameText} để chụp hình lúc <strong>${timeStr}</strong>`;
