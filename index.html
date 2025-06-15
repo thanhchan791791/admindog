@@ -18,19 +18,21 @@
       text-align: center;
       color: #ff69b4;
       font-size: 2em;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px #fff;
     }
 
     #notification {
-      display: none;
-      background-color: #fff0f5;
-      border: 2px dashed #ff69b4;
-      padding: 12px 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
+      background-color: #fff0f7;
+      border-left: 6px solid #ff69b4;
+      padding: 14px 18px;
+      margin: 20px auto;
+      border-radius: 8px;
+      color: #d94f85;
       font-size: 16px;
-      color: #d63384;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 700px;
+      display: block;
     }
 
     .search-box {
@@ -53,10 +55,12 @@
       border-radius: 30px;
       background-color: #fff0f7;
       outline: none;
+      transition: 0.3s;
       color: #d94f85;
+      box-shadow: inset 1px 1px 3px #fff, 2px 2px 4px rgba(0,0,0,0.05);
     }
 
-    .search-wrapper input::placeholder {
+    .search-wrapper input[type="text"]::placeholder {
       color: #d88fa9;
       font-style: italic;
     }
@@ -137,7 +141,7 @@
   <!-- Ô thông báo -->
   <div id="notification">
     <strong>🔔 THÔNG BÁO:</strong><br>
-    <span id="notification-content">🐾 Có khách vừa chọn bé cún!</span>
+    <span id="notification-content">📸 Khách vừa chọn bé Corgi để chụp hình lúc 14:32:17</span>
   </div>
 
   <!-- Ô tìm kiếm -->
@@ -217,22 +221,31 @@
 
     function toggleStatus(dogId, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
-      db.ref("dogs/" + dogId).update({ status: newStatus }).catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
+      db.ref("dogs/" + dogId).update({ status: newStatus })
+        .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
 
-    // Theo dõi các lựa chọn mới từ khách chọn chó chụp ảnh
-    db.ref("chosenDogs").on("child_added", snapshot => {
-      const data = snapshot.val();
-      if (data && data.dogName && data.timestamp) {
-        notificationContent.innerText = `📸 Khách vừa chọn bé ${data.dogName} để chụp hình lúc ${new Date(data.timestamp).toLocaleTimeString('vi-VN')}`;
-        notificationBox.style.display = "block";
-        setTimeout(() => {
-          notificationBox.style.display = "none";
-        }, 10000); // 10 giây ẩn
-      }
-    });
+    function listenForSelections() {
+      db.ref("chosenDogs").on("child_added", snapshot => {
+        const data = snapshot.val();
+        if (data && data.dogName) {
+          const time = new Date(data.timestamp || Date.now()).toLocaleTimeString();
+          showNotification(`📸 Khách vừa chọn bé ${data.dogName} để chụp hình lúc ${time}`);
+        }
+      });
+    }
+
+    function showNotification(message) {
+      notificationContent.textContent = message;
+      notificationBox.style.display = "block";
+
+      setTimeout(() => {
+        notificationBox.style.display = "none";
+      }, 10000); // 10 giây
+    }
 
     loadDogs();
+    listenForSelections();
   </script>
 </body>
 </html>
