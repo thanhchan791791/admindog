@@ -238,27 +238,27 @@
 
         let html = "🔔 <strong>THÔNG BÁO:</strong><br>";
         const list = Object.values(data);
-
         const allMessages = [];
 
         list.forEach(item => {
-          const time = item.time || item.timestamp || "Không rõ thời gian";
+          const time = item.time || item.timestamp || "chưa rõ thời gian";
 
           if (item.dog) {
             allMessages.push(`📸 Khách vừa chọn bé <strong>${item.dog}</strong> để chụp hình lúc <strong>${time}</strong>`);
           }
 
-          if (item.selectedDogs && Array.isArray(item.selectedDogs)) {
+          if (Array.isArray(item.selectedDogs)) {
             item.selectedDogs.forEach(dogName => {
-              allMessages.push(`📸 Khách vừa chọn bé <strong>${dogName}</strong> để chụp hình lúc <strong>${time}</strong>`);
+              if (dogName) {
+                allMessages.push(`📸 Khách vừa chọn bé <strong>${dogName}</strong> để chụp hình lúc <strong>${time}</strong>`);
+              }
             });
           }
         });
 
         if (allMessages.length === 0) {
-          notificationBox.innerHTML = "📭 Chưa có thông báo nào.";
+          notificationBox.innerHTML = "📭 Không có thông tin hợp lệ để hiển thị.";
         } else {
-          // Hiển thị từ mới nhất xuống
           notificationBox.innerHTML = html + allMessages.reverse().join("<br>—<br>");
         }
       });
