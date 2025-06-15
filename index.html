@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🐶 Quản lý trạng thái chó</title>
+  <title>🐶 Quản lý chó</title>
   <style>
     body {
       font-family: 'Comic Sans MS', cursive;
@@ -21,35 +21,25 @@
       margin-bottom: 20px;
     }
 
-    #notification {
-      background-color: #fff0f5;
-      border: 4px solid #ff69b4;
-      color: #b30047;
-      padding: 20px;
-      border-radius: 20px;
-      margin: 20px auto;
-      font-size: 18px;
-      font-weight: bold;
-      line-height: 1.8;
-      max-height: 250px;
-      overflow-y: auto;
+    .btn-area {
+      text-align: right;
+      margin-bottom: 10px;
     }
 
-    .clear-btn {
-      display: block;
-      margin: 10px auto 30px;
-      padding: 10px 18px;
-      background: #ff4d4d;
+    .btn-area button {
+      background-color: #ff69b4;
       color: white;
       font-weight: bold;
       border: none;
+      padding: 10px 18px;
       border-radius: 20px;
+      margin-left: 10px;
       cursor: pointer;
       transition: 0.3s;
     }
 
-    .clear-btn:hover {
-      background: #e60000;
+    .btn-area button:hover {
+      background-color: #e60073;
     }
 
     .search-box {
@@ -75,10 +65,19 @@
       color: #d94f85;
     }
 
+    .search-wrapper::after {
+      content: "🔍";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
       background-color: white;
       border-radius: 12px;
       overflow: hidden;
@@ -86,7 +85,7 @@
     }
 
     th, td {
-      padding: 14px 12px;
+      padding: 14px;
       text-align: center;
       border-bottom: 1px solid #f3d7e3;
     }
@@ -108,48 +107,83 @@
       border-radius: 8px;
     }
 
-    button {
-      padding: 8px 14px;
+    button.action-btn {
+      margin: 2px 4px;
+      padding: 6px 10px;
       border: none;
       border-radius: 20px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: bold;
       cursor: pointer;
       color: white;
-      transition: 0.3s;
     }
 
-    .active-btn {
-      background: linear-gradient(to right, #63d471, #233329);
-    }
-
-    .inactive-btn {
-      background: linear-gradient(to right, #f85032, #e73827);
-    }
+    .active-btn { background: #28a745; }
+    .inactive-btn { background: #e74c3c; }
+    .edit-btn { background: #f39c12; }
+    .delete-btn { background: #c0392b; }
 
     .form-popup {
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      z-index: 1000;
+      transform: translate(-50%, -50%) scale(1);
+      background: linear-gradient(to bottom right, #fff, #ffe0f0);
+      padding: 30px 25px;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      z-index: 1001;
+      width: 320px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -60%) scale(0.95); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    .form-popup h3 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #c0396d;
+      font-size: 20px;
+      text-align: center;
     }
 
     .form-popup input {
-      display: block;
       width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      border: 1.5px solid #ffb6c1;
+      border-radius: 10px;
+      font-size: 14px;
+      background-color: #fffafc;
+    }
+
+    .form-popup input:focus {
+      border-color: #ff4d94;
+      outline: none;
+      box-shadow: 0 0 0 2px #ffd6e6;
     }
 
     .form-popup button {
+      width: 100%;
+      padding: 10px 14px;
       margin-top: 10px;
+      font-weight: bold;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .form-popup button:first-of-type {
+      background-color: #e84393;
+      color: white;
+    }
+
+    .form-popup button:last-of-type {
+      background-color: #ccc;
+      color: #333;
     }
 
     .overlay {
@@ -157,32 +191,25 @@
       top: 0; left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0,0,0,0.5);
-      z-index: 999;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      backdrop-filter: blur(3px);
     }
-
   </style>
 </head>
 <body>
-  <h1>🔧 Cập nhật chó xuống chơi trong ca 🐶</h1>
+  <h1>🐶 Danh sách các bé cún</h1>
 
-  <!-- THÔNG BÁO -->
-  <div id="notification">🔔 Đang tải thông báo...</div>
-  <button class="clear-btn" onclick="clearNotifications()">🗑️ Xóa tất cả thông báo</button>
+  <div class="btn-area">
+    <button onclick="showAddForm()">➕ Thêm chó mới</button>
+  </div>
 
-  <!-- Ô tìm kiếm -->
   <div class="search-box">
     <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="🔍 Gõ tên bé cún cần tìm..." oninput="renderFilteredDogs()" />
+      <input type="text" id="searchInput" placeholder="🔍 Tìm theo tên..." oninput="renderFilteredDogs()" />
     </div>
   </div>
 
-  <!-- Nút thêm chó -->
-  <div style="text-align: right; margin: 10px 0;">
-    <button onclick="openDogForm()" style="background:#00b894; color:white;">➕ Thêm chó</button>
-  </div>
-
-  <!-- BẢNG DANH SÁCH -->
   <table>
     <thead>
       <tr>
@@ -191,23 +218,20 @@
         <th>Giống</th>
         <th>Trạng thái</th>
         <th>Hành động</th>
-        <th>🛠️ Sửa</th>
-        <th>🗑️</th>
       </tr>
     </thead>
     <tbody id="dog-table-body"></tbody>
   </table>
 
-  <!-- Form thêm/sửa -->
-  <div id="popupForm" class="form-popup" style="display:none;">
+  <div id="overlay" class="overlay" style="display:none;"></div>
+  <div id="formPopup" class="form-popup" style="display:none;">
     <h3 id="formTitle">Thêm chó</h3>
-    <input type="text" id="dogName" placeholder="Tên chó" />
-    <input type="text" id="dogBreed" placeholder="Giống chó" />
-    <input type="text" id="dogImage" placeholder="URL ảnh" />
+    <input id="dogName" placeholder="Tên bé cún" />
+    <input id="dogBreed" placeholder="Giống loài" />
+    <input id="dogImage" placeholder="URL ảnh" />
     <button onclick="saveDog()">💾 Lưu</button>
-    <button onclick="closeDogForm()" style="background:#ccc;color:black;">Đóng</button>
+    <button onclick="hideForm()">❌ Hủy</button>
   </div>
-  <div id="overlay" class="overlay" style="display:none;" onclick="closeDogForm()"></div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -224,11 +248,12 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
     const tableBody = document.getElementById("dog-table-body");
     const searchInput = document.getElementById("searchInput");
-    const notificationBox = document.getElementById("notification");
 
-    let allDogs = {}, editingId = null;
+    let allDogs = {};
+    let editingDogId = null;
 
     function loadDogs() {
       db.ref("dogs").on("value", snapshot => {
@@ -240,95 +265,56 @@
     function renderFilteredDogs() {
       const keyword = searchInput.value.toLowerCase().trim();
       tableBody.innerHTML = "";
+
       for (const id in allDogs) {
         const dog = allDogs[id];
         if (!dog.name.toLowerCase().includes(keyword)) continue;
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><img src="${dog.image || '#'}" alt="${dog.name}"></td>
+          <td><img src="${dog.image || "#"}" alt="${dog.name}" /></td>
           <td>${dog.name}</td>
-          <td>${dog.breed || 'Không rõ'}</td>
-          <td>${dog.status === 'play' ? '☀️ Đang chơi' : '🌙 Nghỉ ngơi'}</td>
+          <td>${dog.breed || "Không rõ"}</td>
+          <td>${dog.status === "play" ? "☀️ Đang chơi" : "🌙 Nghỉ ngơi"}</td>
           <td>
-            <button class="${dog.status === 'play' ? 'inactive-btn' : 'active-btn'}"
-              onclick="toggleStatus('${id}', '${dog.status}')">
-              ${dog.status === 'play' ? '🌙 Cho nghỉ' : '☀️ Xuống chơi'}
-            </button>
-          </td>
-          <td>
-            <button onclick="editDog('${id}')" style="background:#0984e3;">✏️</button>
-          </td>
-          <td>
-            <button onclick="deleteDog('${id}')" style="background:#d63031;">🗑️</button>
+            <button class="action-btn ${dog.status === "play" ? "inactive-btn" : "active-btn"}" onclick="toggleStatus('${id}', '${dog.status}')">${dog.status === "play" ? "🌙 Cho nghỉ" : "☀️ Xuống chơi"}</button>
+            <button class="action-btn edit-btn" onclick="showEditForm('${id}')">✏️ Sửa</button>
+            <button class="action-btn delete-btn" onclick="deleteDog('${id}')">🗑️ Xóa</button>
           </td>
         `;
         tableBody.appendChild(tr);
       }
     }
 
-    function toggleStatus(dogId, currentStatus) {
+    function toggleStatus(id, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
-      db.ref("dogs/" + dogId).update({ status: newStatus });
+      db.ref("dogs/" + id).update({ status: newStatus });
     }
 
-    function loadNotifications() {
-      db.ref("photoRequests").limitToLast(10).on("value", snapshot => {
-        const data = snapshot.val();
-        if (!data) {
-          notificationBox.innerHTML = "📭 Chưa có thông báo nào.";
-          return;
-        }
-        const list = Object.values(data);
-        const messages = list.map(item => {
-          let names = [];
-          if (Array.isArray(item.selectedDogs)) names = item.selectedDogs.filter(n => !!n);
-          else if (item.dog) names.push(item.dog);
-          const timeText = formatTime(item.time || item.timestamp);
-          return names.length > 0 ? `📸 Khách vừa chọn <strong>${names.join(", ")}</strong> lúc <strong>${timeText}</strong>` : null;
-        }).filter(Boolean);
-        notificationBox.innerHTML = messages.length > 0
-          ? "🔔 <strong>THÔNG BÁO:</strong><br>" + messages.reverse().join("<br>—<br>")
-          : "📭 Không có thông tin hợp lệ để hiển thị.";
-      });
-    }
-
-    function formatTime(input) {
-      const date = new Date(input);
-      if (isNaN(date.getTime())) return input;
-      date.setUTCHours(date.getUTCHours() + 7);
-      return `${date.getHours()}h${date.getMinutes().toString().padStart(2,"0")}p - ${date.getDate()}/${date.getMonth()+1}`;
-    }
-
-    function clearNotifications() {
-      if (confirm("❗Bạn có chắc muốn xóa tất cả thông báo không?")) {
-        db.ref("photoRequests").remove()
-          .then(() => alert("✅ Đã xóa tất cả thông báo."));
-      }
-    }
-
-    function openDogForm() {
-      editingId = null;
-      document.getElementById("formTitle").innerText = "Thêm chó";
+    function showAddForm() {
+      editingDogId = null;
+      document.getElementById("formTitle").textContent = "Thêm chó";
       document.getElementById("dogName").value = "";
       document.getElementById("dogBreed").value = "";
       document.getElementById("dogImage").value = "";
-      document.getElementById("popupForm").style.display = "block";
+      document.getElementById("formPopup").style.display = "block";
       document.getElementById("overlay").style.display = "block";
     }
 
-    function editDog(id) {
+    function showEditForm(id) {
       const dog = allDogs[id];
-      editingId = id;
-      document.getElementById("formTitle").innerText = "Sửa thông tin chó";
-      document.getElementById("dogName").value = dog.name || "";
+      if (!dog) return;
+      editingDogId = id;
+      document.getElementById("formTitle").textContent = "Sửa thông tin";
+      document.getElementById("dogName").value = dog.name;
       document.getElementById("dogBreed").value = dog.breed || "";
       document.getElementById("dogImage").value = dog.image || "";
-      document.getElementById("popupForm").style.display = "block";
+      document.getElementById("formPopup").style.display = "block";
       document.getElementById("overlay").style.display = "block";
     }
 
-    function closeDogForm() {
-      document.getElementById("popupForm").style.display = "none";
+    function hideForm() {
+      document.getElementById("formPopup").style.display = "none";
       document.getElementById("overlay").style.display = "none";
     }
 
@@ -336,25 +322,26 @@
       const name = document.getElementById("dogName").value.trim();
       const breed = document.getElementById("dogBreed").value.trim();
       const image = document.getElementById("dogImage").value.trim();
-      if (!name) return alert("❗Vui lòng nhập tên chó.");
-      const data = { name, breed, image, status: "rest" };
-      if (editingId) {
-        db.ref("dogs/" + editingId).update(data);
+      if (!name) return alert("Vui lòng nhập tên bé!");
+
+      const dogData = { name, breed, image, status: "rest" };
+
+      if (editingDogId) {
+        db.ref("dogs/" + editingDogId).update(dogData);
       } else {
-        const newId = db.ref("dogs").push().key;
-        db.ref("dogs/" + newId).set(data);
+        const newRef = db.ref("dogs").push();
+        newRef.set(dogData);
       }
-      closeDogForm();
+      hideForm();
     }
 
     function deleteDog(id) {
-      if (confirm("❗Bạn có chắc muốn xóa bé chó này không?")) {
+      if (confirm("Bạn có chắc muốn xóa bé cún này?")) {
         db.ref("dogs/" + id).remove();
       }
     }
 
     loadDogs();
-    loadNotifications();
   </script>
 </body>
 </html>
