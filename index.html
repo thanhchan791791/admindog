@@ -9,7 +9,7 @@
       font-family: 'Comic Sans MS', 'Segoe UI', cursive, sans-serif;
       background: linear-gradient(to right, #fff1f9, #ffe6f0);
       padding: 20px;
-      max-width: 800px;
+      max-width: 1000px;
       margin: auto;
       color: #5c5c5c;
     }
@@ -17,8 +17,8 @@
     h1 {
       text-align: center;
       color: #ff69b4;
-      font-size: 1.8em;
-      margin-bottom: 20px;
+      font-size: 2em;
+      margin-bottom: 30px;
       text-shadow: 1px 1px #fff;
     }
 
@@ -30,7 +30,7 @@
 
     .search-wrapper {
       position: relative;
-      width: 100%;
+      width: 70%;
       max-width: 500px;
     }
 
@@ -63,45 +63,42 @@
       color: #888;
     }
 
-    #dog-table-body {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 16px;
-      margin-top: 20px;
-    }
-
-    .dog-card {
-      background: #fff;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      background-color: white;
       border-radius: 12px;
-      padding: 16px;
+      overflow: hidden;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 250px;
-      text-align: center;
     }
 
-    .dog-card img {
-      width: 100%;
-      height: 160px;
+    th, td {
+      padding: 14px 12px;
+      text-align: center;
+      border-bottom: 1px solid #f3d7e3;
+    }
+
+    th {
+      background-color: #ffd6e6;
+      color: #c63565;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background-color: #fff6fa;
+    }
+
+    img {
+      width: 80px;
+      height: 60px;
       object-fit: cover;
       border-radius: 8px;
-      margin-bottom: 12px;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
     }
 
-    .dog-card h3 {
-      margin: 6px 0;
-      color: #d94f85;
-    }
-
-    .dog-card p {
-      margin: 4px 0;
-      font-size: 14px;
-    }
-
-    .dog-card button {
-      margin-top: 8px;
-      padding: 8px 16px;
+    button {
+      padding: 8px 14px;
       border: none;
       border-radius: 20px;
       font-size: 14px;
@@ -135,8 +132,18 @@
     </div>
   </div>
 
-  <!-- Vùng hiển thị danh sách chó -->
-  <div id="dog-table-body"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Ảnh</th>
+        <th>Tên</th>
+        <th>Giống</th>
+        <th>Trạng thái</th>
+        <th>Hành động</th>
+      </tr>
+    </thead>
+    <tbody id="dog-table-body"></tbody>
+  </table>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -174,19 +181,20 @@
         const dog = allDogs[id];
         if (!dog.name.toLowerCase().includes(keyword)) continue;
 
-        const card = document.createElement("div");
-        card.className = "dog-card";
-        card.innerHTML = `
-          <img src="${dog.image}" alt="${dog.name}" />
-          <h3>${dog.name}</h3>
-          <p><strong>Giống:</strong> ${dog.breed}</p>
-          <p><strong>Trạng thái:</strong> ${dog.status === 'play' ? '☀️ Đang chơi' : '🌙 Nghỉ ngơi'}</p>
-          <button class="${dog.status === 'play' ? 'inactive-btn' : 'active-btn'}"
-            onclick="toggleStatus('${id}', '${dog.status}')">
-            ${dog.status === 'play' ? '🌙 Cho nghỉ' : '☀️ Xuống chơi'}
-          </button>
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><img src="${dog.image}" alt="${dog.name}"></td>
+          <td>${dog.name}</td>
+          <td>${dog.breed}</td>
+          <td>${dog.status === 'play' ? '☀️ Đang chơi' : '🌙 Nghỉ ngơi'}</td>
+          <td>
+            <button class="${dog.status === 'play' ? 'inactive-btn' : 'active-btn'}"
+              onclick="toggleStatus('${id}', '${dog.status}')">
+              ${dog.status === 'play' ? '🌙 Cho nghỉ' : '☀️ Xuống chơi'}
+            </button>
+          </td>
         `;
-        tableBody.appendChild(card);
+        tableBody.appendChild(tr);
       }
     }
 
@@ -194,7 +202,7 @@
       const newStatus = currentStatus === "play" ? "rest" : "play";
       db.ref("dogs/" + dogId).update({ status: newStatus })
         .then(() => {
-          // Firebase sẽ tự động cập nhật qua on("value")
+          // tự cập nhật qua Firebase real-time
         })
         .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
