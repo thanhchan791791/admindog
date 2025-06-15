@@ -140,23 +140,52 @@
     .inactive-btn {
       background: linear-gradient(to right, #f85032, #e73827);
     }
+
+    #formModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: #00000077;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    #formModal .form-box {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    }
+
+    #formModal input, #formModal select {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
   <h1>🔧 Cập nhật chó xuống chơi trong ca 🐶</h1>
 
-  <!-- THÔNG BÁO -->
+  <div style="text-align: center; margin-bottom: 10px;">
+    <button onclick="openDogForm()" style="background:#00b894; color:white; padding:10px 20px; border:none; border-radius:20px; font-weight:bold;">➕ Thêm chó</button>
+  </div>
+
   <div id="notification">🔔 Đang tải thông báo...</div>
   <button class="clear-btn" onclick="clearNotifications()">🗑️ Xóa tất cả thông báo</button>
 
-  <!-- Ô tìm kiếm -->
   <div class="search-box">
     <div class="search-wrapper">
       <input type="text" id="searchInput" placeholder="🔍 Gõ tên bé cún cần tìm..." oninput="renderFilteredDogs()" />
     </div>
   </div>
 
-  <!-- BẢNG DANH SÁCH -->
   <table>
     <thead>
       <tr>
@@ -165,12 +194,32 @@
         <th>Giống</th>
         <th>Trạng thái</th>
         <th>Hành động</th>
+        <th>✏️</th>
       </tr>
     </thead>
     <tbody id="dog-table-body"></tbody>
   </table>
 
-  <!-- Firebase SDK -->
+  <!-- FORM MODAL -->
+  <div id="formModal">
+    <div class="form-box">
+      <h2 id="formTitle">📝 Nhập thông tin chó</h2>
+      <label>Tên:</label>
+      <input id="dogName">
+      <label>Giống:</label>
+      <input id="dogBreed">
+      <label>Ảnh (URL):</label>
+      <input id="dogImage">
+      <label>Trạng thái:</label>
+      <select id="dogStatus">
+        <option value="play">☀️ Đang chơi</option>
+        <option value="rest">🌙 Nghỉ ngơi</option>
+      </select>
+      <button onclick="saveDog()" style="background:#27ae60; color:white;">💾 Lưu</button>
+      <button onclick="closeForm()" style="background:#b2bec3; color:black; margin-left:10px;">❌ Hủy</button>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
@@ -191,6 +240,7 @@
     const notificationBox = document.getElementById("notification");
 
     let allDogs = {};
+    let editingDogId = null;
 
     function loadDogs() {
       db.ref("dogs").on("value", snapshot => {
@@ -218,6 +268,9 @@
               onclick="toggleStatus('${id}', '${dog.status}')">
               ${dog.status === 'play' ? '🌙 Cho nghỉ' : '☀️ Xuống chơi'}
             </button>
+          </td>
+          <td>
+            <button onclick="openDogForm('${id}')" style="background:#fab1a0; color:white;">✏️</button>
           </td>
         `;
         tableBody.appendChild(tr);
@@ -271,7 +324,6 @@
       });
     }
 
-    // ✅ Hàm xóa tất cả thông báo
     function clearNotifications() {
       if (confirm("❗Bạn có chắc muốn xóa tất cả thông báo không?")) {
         db.ref("photoRequests").remove()
@@ -280,7 +332,59 @@
       }
     }
 
-    // Bắt đầu tải dữ liệu
+    function openDogForm(dogId = null) {
+      editingDogId = dogId;
+      const modal = document.getElementById("formModal");
+      const title = document.getElementById("formTitle");
+      const name = document.getElementById("dogName");
+      const breed = document.getElementById("dogBreed");
+      const image = document.getElementById("dogImage");
+      const status = document.getElementById("dogStatus");
+
+      if (dogId && allDogs[dogId]) {
+        const dog = allDogs[dogId];
+        name.value = dog.name || "";
+        breed.value = dog.breed || "";
+        image.value = dog.image || "";
+        status.value = dog.status || "rest";
+        title.innerText = "✏️ Sửa thông tin chó";
+      } else {
+        name.value = "";
+        breed.value = "";
+        image.value = "";
+        status.value = "rest";
+        title.innerText = "➕ Thêm chó mới";
+      }
+
+      modal.style.display = "flex";
+    }
+
+    function closeForm() {
+      document.getElementById("formModal").style.display = "none";
+      editingDogId = null;
+    }
+
+    function saveDog() {
+      const name = document.getElementById("dogName").value.trim();
+      const breed = document.getElementById("dogBreed").value.trim();
+      const image = document.getElementById("dogImage").value.trim();
+      const status = document.getElementById("dogStatus").value;
+
+      if (!name) return alert("❗Vui lòng nhập tên chó");
+
+      const dogData = { name, breed, image, status };
+
+      if (editingDogId) {
+        db.ref("dogs/" + editingDogId).update(dogData)
+          .then(() => closeForm())
+          .catch(err => alert("❌ Lỗi khi lưu: " + err.message));
+      } else {
+        db.ref("dogs").push(dogData)
+          .then(() => closeForm())
+          .catch(err => alert("❌ Lỗi khi thêm: " + err.message));
+      }
+    }
+
     loadDogs();
     loadNotifications();
   </script>
