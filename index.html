@@ -84,11 +84,12 @@
     const db = firebase.database();
     const notificationBox = document.getElementById("notificationBox");
 
+    // Hàm định dạng giờ:phút từ timestamp
     function formatTime(timestamp) {
       const date = new Date(timestamp);
-      const h = date.getHours().toString().padStart(2, "0");
-      const m = date.getMinutes().toString().padStart(2, "0");
-      return `${h}h${m}p`;
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}h${minutes}p`;
     }
 
     function loadNotifications() {
@@ -116,8 +117,8 @@
           let timeStr = "không rõ giờ";
           if (item.timestamp) {
             timeStr = formatTime(item.timestamp);
-          } else if (item.time) {
-            timeStr = item.time;
+          } else if (item.time && typeof item.time === 'string') {
+            timeStr = item.time; // giả định đã đúng định dạng
           }
 
           return `📸 Khách đã chọn bé ${nameText} để chụp hình lúc <strong>${timeStr}</strong>`;
