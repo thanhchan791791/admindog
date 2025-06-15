@@ -19,22 +19,18 @@
       color: #ff69b4;
       font-size: 2em;
       margin-bottom: 20px;
-      text-shadow: 1px 1px #fff;
     }
 
     #notification {
       display: none;
-      background-color: #fff0f4;
-      border: 2px solid #ff7fa0;
-      border-radius: 10px;
-      padding: 16px;
-      margin: 20px auto;
-      max-width: 600px;
-      text-align: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      color: #d94f85;
-      font-weight: bold;
+      background-color: #fff0f5;
+      border: 2px dashed #ff69b4;
+      padding: 12px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
       font-size: 16px;
+      color: #d63384;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     .search-box {
@@ -57,12 +53,10 @@
       border-radius: 30px;
       background-color: #fff0f7;
       outline: none;
-      transition: 0.3s;
       color: #d94f85;
-      box-shadow: inset 1px 1px 3px #fff, 2px 2px 4px rgba(0,0,0,0.05);
     }
 
-    .search-wrapper input[type="text"]::placeholder {
+    .search-wrapper input::placeholder {
       color: #d88fa9;
       font-style: italic;
     }
@@ -140,8 +134,11 @@
 <body>
   <h1>🔧 Quản lý trạng thái bé cún yêu 🐶</h1>
 
-  <!-- Thông báo chọn chó -->
-  <div id="notification">🐾 Có khách vừa chọn bé cún!</div>
+  <!-- Ô thông báo -->
+  <div id="notification">
+    <strong>🔔 THÔNG BÁO:</strong><br>
+    <span id="notification-content">🐾 Có khách vừa chọn bé cún!</span>
+  </div>
 
   <!-- Ô tìm kiếm -->
   <div class="search-box">
@@ -181,6 +178,8 @@
     const db = firebase.database();
     const tableBody = document.getElementById("dog-table-body");
     const searchInput = document.getElementById("searchInput");
+    const notificationBox = document.getElementById("notification");
+    const notificationContent = document.getElementById("notification-content");
 
     let allDogs = {};
 
@@ -218,26 +217,22 @@
 
     function toggleStatus(dogId, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
-      db.ref("dogs/" + dogId).update({ status: newStatus })
-        .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
+      db.ref("dogs/" + dogId).update({ status: newStatus }).catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
 
-    function listenForDogSelections() {
-      const notificationBox = document.getElementById("notification");
-      db.ref("chosenDogs").on("child_added", snapshot => {
-        const data = snapshot.val();
-        if (data && data.dogName && data.timestamp) {
-          notificationBox.innerText = `📸 Khách vừa chọn bé ${data.dogName} để chụp hình lúc ${new Date(data.timestamp).toLocaleTimeString('vi-VN')}`;
-          notificationBox.style.display = "block";
-          setTimeout(() => {
-            notificationBox.style.display = "none";
-          }, 10000);
-        }
-      });
-    }
+    // Theo dõi các lựa chọn mới từ khách chọn chó chụp ảnh
+    db.ref("chosenDogs").on("child_added", snapshot => {
+      const data = snapshot.val();
+      if (data && data.dogName && data.timestamp) {
+        notificationContent.innerText = `📸 Khách vừa chọn bé ${data.dogName} để chụp hình lúc ${new Date(data.timestamp).toLocaleTimeString('vi-VN')}`;
+        notificationBox.style.display = "block";
+        setTimeout(() => {
+          notificationBox.style.display = "none";
+        }, 10000); // 10 giây ẩn
+      }
+    });
 
     loadDogs();
-    listenForDogSelections();
   </script>
 </body>
 </html>
