@@ -1,213 +1,150 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🐶 Quản lý trạng thái chó</title>
-  <style>
-    body {
-      font-family: 'Comic Sans MS', 'Segoe UI', cursive, sans-serif;
-      background: linear-gradient(to right, #fff1f9, #ffe6f0);
-      padding: 20px;
-      max-width: 1000px;
-      margin: auto;
-      color: #5c5c5c;
+<!-- CHỈ THAY PHẦN <style> và <tbody> bằng phần này là đủ -->
+
+<style>
+  body {
+    font-family: 'Comic Sans MS', 'Segoe UI', cursive, sans-serif;
+    background: linear-gradient(to right, #fff1f9, #ffe6f0);
+    padding: 20px;
+    max-width: 1000px;
+    margin: auto;
+    color: #5c5c5c;
+  }
+
+  h1 {
+    text-align: center;
+    color: #ff69b4;
+    font-size: 2em;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px #fff;
+  }
+
+  .search-box {
+    display: flex;
+    justify-content: center;
+    margin: 20px auto;
+  }
+
+  .search-wrapper {
+    position: relative;
+    width: 90%;
+    max-width: 500px;
+  }
+
+  .search-wrapper input[type="text"] {
+    width: 100%;
+    padding: 12px 40px 12px 18px;
+    font-size: 16px;
+    border: 2px solid #ffb6c1;
+    border-radius: 30px;
+    background-color: #fff0f7;
+    outline: none;
+    color: #d94f85;
+    box-shadow: inset 1px 1px 3px #fff, 2px 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .search-wrapper::after {
+    content: "🔍";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    pointer-events: none;
+    color: #888;
+  }
+
+  #dog-table-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 30px;
+  }
+
+  .dog-card {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 16px;
+    width: 280px;
+    text-align: center;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .dog-card:hover {
+    transform: scale(1.02);
+  }
+
+  .dog-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dog-card h3 {
+    margin: 6px 0;
+    color: #c63565;
+  }
+
+  .dog-card p {
+    margin: 4px 0;
+  }
+
+  button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    margin-top: 10px;
+    transition: 0.3s;
+    box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
+  }
+
+  .active-btn {
+    background: linear-gradient(to right, #63d471, #233329);
+  }
+
+  .inactive-btn {
+    background: linear-gradient(to right, #f85032, #e73827);
+  }
+
+  .active-btn:hover,
+  .inactive-btn:hover {
+    opacity: 0.9;
+  }
+</style>
+
+<!-- ... trong phần <tbody id="dog-table-body"> thay bằng div + JS tạo card -->
+
+<tbody id="dog-table-body"></tbody>
+
+<script>
+  function renderFilteredDogs() {
+    const keyword = searchInput.value.toLowerCase().trim();
+    tableBody.innerHTML = "";
+
+    for (const id in allDogs) {
+      const dog = allDogs[id];
+      if (!dog.name.toLowerCase().includes(keyword)) continue;
+
+      const card = document.createElement("div");
+      card.className = "dog-card";
+      card.innerHTML = `
+        <img src="${dog.image}" alt="${dog.name}" />
+        <h3>${dog.name}</h3>
+        <p><strong>Giống:</strong> ${dog.breed}</p>
+        <p><strong>Trạng thái:</strong> ${dog.status === 'play' ? '☀️ Đang chơi' : '🌙 Nghỉ ngơi'}</p>
+        <button class="${dog.status === 'play' ? 'inactive-btn' : 'active-btn'}"
+          onclick="toggleStatus('${id}', '${dog.status}')">
+          ${dog.status === 'play' ? '🌙 Cho nghỉ' : '☀️ Xuống chơi'}
+        </button>
+      `;
+      tableBody.appendChild(card);
     }
-
-    h1 {
-      text-align: center;
-      color: #ff69b4;
-      font-size: 2em;
-      margin-bottom: 30px;
-      text-shadow: 1px 1px #fff;
-    }
-
-    .search-box {
-      display: flex;
-      justify-content: center;
-      margin: 20px auto;
-    }
-
-    .search-wrapper {
-      position: relative;
-      width: 70%;
-      max-width: 500px;
-    }
-
-    .search-wrapper input[type="text"] {
-      width: 100%;
-      padding: 12px 40px 12px 18px;
-      font-size: 16px;
-      border: 2px solid #ffb6c1;
-      border-radius: 30px;
-      background-color: #fff0f7;
-      outline: none;
-      transition: 0.3s;
-      color: #d94f85;
-      box-shadow: inset 1px 1px 3px #fff, 2px 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .search-wrapper input[type="text"]::placeholder {
-      color: #d88fa9;
-      font-style: italic;
-    }
-
-    .search-wrapper::after {
-      content: "🔍";
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 18px;
-      pointer-events: none;
-      color: #888;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 30px;
-      background-color: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    th, td {
-      padding: 14px 12px;
-      text-align: center;
-      border-bottom: 1px solid #f3d7e3;
-    }
-
-    th {
-      background-color: #ffd6e6;
-      color: #c63565;
-      font-weight: bold;
-    }
-
-    tr:hover {
-      background-color: #fff6fa;
-    }
-
-    img {
-      width: 80px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 8px;
-      box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-    }
-
-    button {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      color: white;
-      transition: 0.3s;
-      box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
-    }
-
-    .active-btn {
-      background: linear-gradient(to right, #63d471, #233329);
-    }
-
-    .inactive-btn {
-      background: linear-gradient(to right, #f85032, #e73827);
-    }
-
-    .active-btn:hover, .inactive-btn:hover {
-      opacity: 0.9;
-    }
-  </style>
-</head>
-<body>
-  <h1>🔧 Quản lý trạng thái bé cún yêu 🐶</h1>
-
-  <!-- Ô tìm kiếm -->
-  <div class="search-box">
-    <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="🔍 Gõ tên bé cún cần tìm..." oninput="renderFilteredDogs()" />
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Ảnh</th>
-        <th>Tên</th>
-        <th>Giống</th>
-        <th>Trạng thái</th>
-        <th>Hành động</th>
-      </tr>
-    </thead>
-    <tbody id="dog-table-body"></tbody>
-  </table>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBNB1acbPtKox8eTjth3FtWuDOLhueRIys",
-      authDomain: "dogs-be72b.firebaseapp.com",
-      databaseURL: "https://dogs-be72b-default-rtdb.firebaseio.com",
-      projectId: "dogs-be72b",
-      storageBucket: "dogs-be72b.appspot.com",
-      messagingSenderId: "1003873040746",
-      appId: "1:1003873040746:web:607f4ff587afc430d3cd13"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const tableBody = document.getElementById("dog-table-body");
-    const searchInput = document.getElementById("searchInput");
-
-    let allDogs = {};
-
-    function loadDogs() {
-      db.ref("dogs").on("value", snapshot => {
-        allDogs = snapshot.val() || {};
-        renderFilteredDogs();
-      });
-    }
-
-    function renderFilteredDogs() {
-      const keyword = searchInput.value.toLowerCase().trim();
-      tableBody.innerHTML = "";
-
-      for (const id in allDogs) {
-        const dog = allDogs[id];
-        if (!dog.name.toLowerCase().includes(keyword)) continue;
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><img src="${dog.image}" alt="${dog.name}"></td>
-          <td>${dog.name}</td>
-          <td>${dog.breed}</td>
-          <td>${dog.status === 'play' ? '☀️ Đang chơi' : '🌙 Nghỉ ngơi'}</td>
-          <td>
-            <button class="${dog.status === 'play' ? 'inactive-btn' : 'active-btn'}"
-              onclick="toggleStatus('${id}', '${dog.status}')">
-              ${dog.status === 'play' ? '🌙 Cho nghỉ' : '☀️ Xuống chơi'}
-            </button>
-          </td>
-        `;
-        tableBody.appendChild(tr);
-      }
-    }
-
-    function toggleStatus(dogId, currentStatus) {
-      const newStatus = currentStatus === "play" ? "rest" : "play";
-      db.ref("dogs/" + dogId).update({ status: newStatus })
-        .then(() => {
-          // tự cập nhật qua Firebase real-time
-        })
-        .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
-    }
-
-    loadDogs();
-  </script>
-</body>
-</html>
+  }
+</script>
