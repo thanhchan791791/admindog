@@ -6,7 +6,7 @@
   <title>🐶 Quản lý trạng thái chó</title>
   <style>
     body {
-      font-family: 'Comic Sans MS', 'Segoe UI', cursive, sans-serif;
+      font-family: 'Comic Sans MS', cursive;
       background: #ffe6f0;
       padding: 20px;
       max-width: 1000px;
@@ -19,30 +19,26 @@
       color: #ff69b4;
       font-size: 2.2em;
       margin-bottom: 20px;
-      text-shadow: 1px 1px #fff;
     }
 
     #notification {
       background-color: #fff0f5;
       border: 4px solid #ff69b4;
       color: #b30047;
-      padding: 30px 20px;
+      padding: 20px;
       border-radius: 20px;
-      margin: 20px auto 40px auto;
-      text-align: center;
+      margin: 20px auto;
       font-size: 18px;
       font-weight: bold;
       line-height: 1.8;
       max-height: 250px;
       overflow-y: auto;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-      word-wrap: break-word;
     }
 
     .search-box {
       display: flex;
       justify-content: center;
-      margin: 20px auto;
+      margin-bottom: 20px;
     }
 
     .search-wrapper {
@@ -59,14 +55,11 @@
       border-radius: 30px;
       background-color: #fff0f7;
       outline: none;
-      transition: 0.3s;
       color: #d94f85;
-      box-shadow: inset 1px 1px 3px #fff, 2px 2px 4px rgba(0,0,0,0.05);
     }
 
-    .search-wrapper input[type="text"]::placeholder {
+    .search-wrapper input::placeholder {
       color: #d88fa9;
-      font-style: italic;
     }
 
     .search-wrapper::after {
@@ -77,7 +70,6 @@
       transform: translateY(-50%);
       font-size: 18px;
       pointer-events: none;
-      color: #888;
     }
 
     table {
@@ -111,7 +103,6 @@
       height: 60px;
       object-fit: cover;
       border-radius: 8px;
-      box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
     }
 
     button {
@@ -123,7 +114,6 @@
       cursor: pointer;
       color: white;
       transition: 0.3s;
-      box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
     }
 
     .active-btn {
@@ -133,19 +123,13 @@
     .inactive-btn {
       background: linear-gradient(to right, #f85032, #e73827);
     }
-
-    .active-btn:hover, .inactive-btn:hover {
-      opacity: 0.9;
-    }
   </style>
 </head>
 <body>
   <h1>🔧 Cập nhật chó xuống chơi trong ca 🐶</h1>
 
-  <!-- 🔔 THÔNG BÁO -->
-  <div id="notification">
-    🔔 Đang tải thông báo...
-  </div>
+  <!-- THÔNG BÁO -->
+  <div id="notification">🔔 Đang tải thông báo...</div>
 
   <!-- Ô tìm kiếm -->
   <div class="search-box">
@@ -154,6 +138,7 @@
     </div>
   </div>
 
+  <!-- BẢNG DANH SÁCH -->
   <table>
     <thead>
       <tr>
@@ -206,9 +191,9 @@
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><img src="${dog.image}" alt="${dog.name}"></td>
+          <td><img src="${dog.image || '#'}" alt="${dog.name}"></td>
           <td>${dog.name}</td>
-          <td>${dog.breed}</td>
+          <td>${dog.breed || 'Không rõ'}</td>
           <td>${dog.status === 'play' ? '☀️ Đang chơi' : '🌙 Nghỉ ngơi'}</td>
           <td>
             <button class="${dog.status === 'play' ? 'inactive-btn' : 'active-btn'}"
@@ -224,8 +209,16 @@
     function toggleStatus(dogId, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
       db.ref("dogs/" + dogId).update({ status: newStatus })
-        .then(() => {})
         .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
+    }
+
+    function formatTime(timeOrTimestamp) {
+      if (!timeOrTimestamp) return "không rõ thời gian";
+      if (typeof timeOrTimestamp === 'string') return timeOrTimestamp;
+      const date = new Date(timeOrTimestamp);
+      const h = date.getHours().toString().padStart(2, "0");
+      const m = date.getMinutes().toString().padStart(2, "0");
+      return `${h}h${m}p`;
     }
 
     function loadNotifications() {
@@ -236,33 +229,29 @@
           return;
         }
 
-        let html = "🔔 <strong>THÔNG BÁO:</strong><br>";
         const list = Object.values(data);
-        const allMessages = [];
+        const messages = list.map(item => {
+          let names = [];
 
-        list.forEach(item => {
-          const time = item.time || item.timestamp || "không rõ thời gian";
-          let dogNames = [];
-
-          if (item.dog) dogNames.push(item.dog);
           if (Array.isArray(item.selectedDogs)) {
-            dogNames = dogNames.concat(item.selectedDogs.filter(name => !!name));
+            names = item.selectedDogs.filter(n => !!n);
+          } else if (item.dog) {
+            names.push(item.dog);
           }
 
-          if (dogNames.length > 0) {
-            const formattedNames = dogNames.join(", ");
-            allMessages.push(`📸 Khách vừa chọn các bé <strong>${formattedNames}</strong> lúc <strong>${time}</strong>`);
-          }
-        });
+          const timeText = formatTime(item.time || item.timestamp);
+          return names.length > 0
+            ? `📸 Khách vừa chọn <strong>${names.join(", ")}</strong> lúc <strong>${timeText}</strong>`
+            : null;
+        }).filter(Boolean);
 
-        if (allMessages.length === 0) {
-          notificationBox.innerHTML = "📭 Không có thông tin hợp lệ để hiển thị.";
-        } else {
-          notificationBox.innerHTML = html + allMessages.reverse().join("<br>—<br>");
-        }
+        notificationBox.innerHTML = messages.length > 0
+          ? "🔔 <strong>THÔNG BÁO:</strong><br>" + messages.reverse().join("<br>—<br>")
+          : "📭 Không có thông tin hợp lệ để hiển thị.";
       });
     }
 
+    // Khởi chạy
     loadDogs();
     loadNotifications();
   </script>
