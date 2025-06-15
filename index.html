@@ -26,13 +26,16 @@
       background-color: #fff7fa;
       border: 2px dashed #ff94c2;
       color: #c63565;
-      padding: 15px;
-      border-radius: 12px;
+      padding: 20px;
+      border-radius: 16px;
       margin: 10px auto 30px auto;
       text-align: center;
-      font-size: 16px;
-      max-width: 600px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 1.6;
+      max-width: 90%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      word-wrap: break-word;
     }
 
     .search-box {
@@ -140,7 +143,7 @@
 
   <!-- 🔔 Ô thông báo -->
   <div id="notification">
-    <strong>🔔 THÔNG BÁO:</strong><br>
+    🔔 <strong>THÔNG BÁO:</strong><br>
     📸 Khách vừa chọn bé <strong>Corgi</strong> để chụp hình lúc <strong>14:32:17</strong>
   </div>
 
@@ -221,7 +224,7 @@
       const newStatus = currentStatus === "play" ? "rest" : "play";
       db.ref("dogs/" + dogId).update({ status: newStatus })
         .then(() => {
-          // tự cập nhật qua Firebase real-time
+          // Firebase sẽ tự cập nhật giao diện qua listener ở loadDogs
         })
         .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
