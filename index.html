@@ -35,6 +35,23 @@
       overflow-y: auto;
     }
 
+    .clear-btn {
+      display: block;
+      margin: 10px auto 30px;
+      padding: 10px 18px;
+      background: #ff4d4d;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .clear-btn:hover {
+      background: #e60000;
+    }
+
     .search-box {
       display: flex;
       justify-content: center;
@@ -130,6 +147,7 @@
 
   <!-- THÔNG BÁO -->
   <div id="notification">🔔 Đang tải thông báo...</div>
+  <button class="clear-btn" onclick="clearNotifications()">🗑️ Xóa tất cả thông báo</button>
 
   <!-- Ô tìm kiếm -->
   <div class="search-box">
@@ -215,10 +233,7 @@
     function formatTime(input) {
       const date = new Date(input);
       if (isNaN(date.getTime())) return input;
-
-      // Giờ Việt Nam = UTC + 7
       date.setUTCHours(date.getUTCHours() + 7);
-
       const h = date.getHours().toString().padStart(2, "0");
       const m = date.getMinutes().toString().padStart(2, "0");
       const d = date.getDate().toString().padStart(2, "0");
@@ -254,6 +269,15 @@
           ? "🔔 <strong>THÔNG BÁO:</strong><br>" + messages.reverse().join("<br>—<br>")
           : "📭 Không có thông tin hợp lệ để hiển thị.";
       });
+    }
+
+    // ✅ Hàm xóa tất cả thông báo
+    function clearNotifications() {
+      if (confirm("❗Bạn có chắc muốn xóa tất cả thông báo không?")) {
+        db.ref("photoRequests").remove()
+          .then(() => alert("✅ Đã xóa tất cả thông báo."))
+          .catch(err => alert("❌ Lỗi khi xóa: " + err.message));
+      }
     }
 
     // Bắt đầu tải dữ liệu
