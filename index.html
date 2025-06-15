@@ -13,6 +13,7 @@
       margin: auto;
       color: #5c5c5c;
     }
+
     h1 {
       text-align: center;
       color: #ff69b4;
@@ -20,6 +21,7 @@
       margin-bottom: 20px;
       text-shadow: 1px 1px #fff;
     }
+
     #notification {
       background-color: #fff0f5;
       border: 4px solid #ff69b4;
@@ -36,16 +38,19 @@
       box-shadow: 0 6px 15px rgba(0,0,0,0.1);
       word-wrap: break-word;
     }
+
     .search-box {
       display: flex;
       justify-content: center;
       margin: 20px auto;
     }
+
     .search-wrapper {
       position: relative;
       width: 70%;
       max-width: 500px;
     }
+
     .search-wrapper input[type="text"] {
       width: 100%;
       padding: 12px 40px 12px 18px;
@@ -58,10 +63,12 @@
       color: #d94f85;
       box-shadow: inset 1px 1px 3px #fff, 2px 2px 4px rgba(0,0,0,0.05);
     }
+
     .search-wrapper input[type="text"]::placeholder {
       color: #d88fa9;
       font-style: italic;
     }
+
     .search-wrapper::after {
       content: "🔍";
       position: absolute;
@@ -72,6 +79,7 @@
       pointer-events: none;
       color: #888;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -81,19 +89,23 @@
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
+
     th, td {
       padding: 14px 12px;
       text-align: center;
       border-bottom: 1px solid #f3d7e3;
     }
+
     th {
       background-color: #ffd6e6;
       color: #c63565;
       font-weight: bold;
     }
+
     tr:hover {
       background-color: #fff6fa;
     }
+
     img {
       width: 80px;
       height: 60px;
@@ -101,6 +113,7 @@
       border-radius: 8px;
       box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
     }
+
     button {
       padding: 8px 14px;
       border: none;
@@ -112,12 +125,15 @@
       transition: 0.3s;
       box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
     }
+
     .active-btn {
       background: linear-gradient(to right, #63d471, #233329);
     }
+
     .inactive-btn {
       background: linear-gradient(to right, #f85032, #e73827);
     }
+
     .active-btn:hover, .inactive-btn:hover {
       opacity: 0.9;
     }
@@ -127,7 +143,9 @@
   <h1>🔧 Cập nhật chó xuống chơi trong ca 🐶</h1>
 
   <!-- 🔔 THÔNG BÁO -->
-  <div id="notification">🔔 Đang tải thông báo...</div>
+  <div id="notification">
+    🔔 Đang tải thông báo...
+  </div>
 
   <!-- Ô tìm kiếm -->
   <div class="search-box">
@@ -223,14 +241,18 @@
           let name = item.dog || (Array.isArray(item.selectedDogs) && item.selectedDogs[0]);
           if (!name) return null;
 
-          let timeStr = item.time;
-          if (!timeStr && item.timestamp) {
+          // Chuyển đổi timestamp sang định dạng 14h38p
+          let timeStr = "";
+          if (item.timestamp) {
             const date = new Date(item.timestamp);
             const h = date.getHours().toString().padStart(2, "0");
             const m = date.getMinutes().toString().padStart(2, "0");
             timeStr = `${h}h${m}p`;
+          } else if (item.time) {
+            timeStr = item.time;
+          } else {
+            timeStr = "không rõ giờ";
           }
-          if (!timeStr) timeStr = "không rõ thời gian";
 
           return `📸 Khách đã chọn bé <strong>${name}</strong> để chụp hình lúc <strong>${timeStr}</strong>`;
         }).filter(Boolean);
