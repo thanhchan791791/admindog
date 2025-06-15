@@ -17,24 +17,24 @@
     h1 {
       text-align: center;
       color: #ff69b4;
-      font-size: 2em;
+      font-size: 2.2em;
       margin-bottom: 20px;
       text-shadow: 1px 1px #fff;
     }
 
     #notification {
-      background-color: #fff7fa;
-      border: 2px dashed #ff94c2;
-      color: #c63565;
-      padding: 20px;
-      border-radius: 16px;
-      margin: 10px auto 30px auto;
+      background-color: #fff0f5;
+      border: 4px solid #ff69b4;
+      color: #b30047;
+      padding: 30px 20px;
+      border-radius: 20px;
+      margin: 20px auto 40px auto;
       text-align: center;
-      font-size: 18px;
+      font-size: 30px;
       font-weight: bold;
-      line-height: 1.6;
-      max-width: 90%;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      line-height: 1.8;
+      max-width: 100%;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
       word-wrap: break-word;
     }
 
@@ -224,7 +224,7 @@
       const newStatus = currentStatus === "play" ? "rest" : "play";
       db.ref("dogs/" + dogId).update({ status: newStatus })
         .then(() => {
-          // Firebase sẽ tự cập nhật giao diện qua listener ở loadDogs
+          // Firebase realtime tự cập nhật
         })
         .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
