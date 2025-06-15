@@ -30,10 +30,11 @@
       border-radius: 20px;
       margin: 20px auto 40px auto;
       text-align: center;
-      font-size: 30px;
+      font-size: 18px;
       font-weight: bold;
       line-height: 1.8;
-      max-width: 100%;
+      max-height: 250px;
+      overflow-y: auto;
       box-shadow: 0 6px 15px rgba(0,0,0,0.1);
       word-wrap: break-word;
     }
@@ -141,10 +142,9 @@
 <body>
   <h1>🔧 Cập nhật chó xuống chơi trong ca 🐶</h1>
 
-  <!-- 🔔 Ô thông báo -->
+  <!-- 🔔 THÔNG BÁO -->
   <div id="notification">
-    🔔 <strong>THÔNG BÁO:</strong><br>
-    📸 Khách vừa chọn bé <strong>Corgi</strong> để chụp hình lúc <strong>14:32:17</strong>
+    🔔 Đang tải thông báo...
   </div>
 
   <!-- Ô tìm kiếm -->
@@ -185,6 +185,7 @@
     const db = firebase.database();
     const tableBody = document.getElementById("dog-table-body");
     const searchInput = document.getElementById("searchInput");
+    const notificationBox = document.getElementById("notification");
 
     let allDogs = {};
 
@@ -223,13 +224,31 @@
     function toggleStatus(dogId, currentStatus) {
       const newStatus = currentStatus === "play" ? "rest" : "play";
       db.ref("dogs/" + dogId).update({ status: newStatus })
-        .then(() => {
-          // Firebase realtime tự cập nhật
-        })
+        .then(() => {})
         .catch(err => alert("❌ Lỗi khi cập nhật: " + err.message));
     }
 
+    function loadNotifications() {
+      db.ref("photoRequests").limitToLast(10).on("value", snapshot => {
+        const data = snapshot.val();
+        if (!data) {
+          notificationBox.innerHTML = "📭 Chưa có thông báo nào.";
+          return;
+        }
+
+        let html = "🔔 <strong>THÔNG BÁO:</strong><br>";
+        const list = Object.values(data).reverse(); // hiện thông báo mới nhất trước
+
+        html += list.map(item =>
+          `📸 Khách vừa chọn bé <strong>${item.dog}</strong> để chụp hình lúc <strong>${item.time}</strong>`
+        ).join("<br>—<br>");
+
+        notificationBox.innerHTML = html;
+      });
+    }
+
     loadDogs();
+    loadNotifications();
   </script>
 </body>
 </html>
