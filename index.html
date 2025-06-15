@@ -62,33 +62,42 @@
   </div>
 
   <div class="search">
-    <input type="text" placeholder="🔍 Gõ tên bé cún cần tìm..." />
+    <input type="text" id="searchInput" placeholder="🔍 Gõ tên bé cún cần tìm..." />
   </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
-    // Cấu hình Firebase (thay bằng thông tin thật của bạn)
+    // Cấu hình Firebase thật
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
+      apiKey: "AIzaSyBNB1acbPtKox8eTjth3FtWuDOLhueRIys",
+      authDomain: "dogs-be72b.firebaseapp.com",
+      databaseURL: "https://dogs-be72b-default-rtdb.firebaseio.com",
+      projectId: "dogs-be72b",
+      storageBucket: "dogs-be72b.appspot.com",
+      messagingSenderId: "1003873040746",
+      appId: "1:1003873040746:web:607f4ff587afc430d3cd13"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const notificationBox = document.getElementById("notificationBox");
+    const searchInput = document.getElementById("searchInput");
+
+    let allMessages = [];
 
     function formatTime(timestamp) {
       const date = new Date(timestamp);
       const h = date.getHours().toString().padStart(2, "0");
       const m = date.getMinutes().toString().padStart(2, "0");
-      return ${h}h${m}p;
+      return `${h}h${m}p`;
+    }
+
+    function renderMessages(messages) {
+      notificationBox.innerHTML = messages.length > 0
+        ? messages.map(msg => `<div class="notification">${msg}</div><div class="divider">—</div>`).join("")
+        : "📭 Không có thông tin hợp lệ để hiển thị.";
     }
 
     function loadNotifications() {
@@ -100,7 +109,7 @@
         }
 
         const list = Object.values(data);
-        const messages = list.map(item => {
+        allMessages = list.map(item => {
           let names = [];
 
           if (Array.isArray(item.selectedDogs) && item.selectedDogs.length > 0) {
@@ -111,7 +120,7 @@
 
           if (names.length === 0) return null;
 
-          const nameText = names.map(name => <strong>${name}</strong>).join(", ");
+          const nameText = names.map(name => `<strong>${name}</strong>`).join(", ");
 
           let timeStr = "không rõ giờ";
           if (item.timestamp) {
@@ -120,14 +129,19 @@
             timeStr = item.time;
           }
 
-          return 📸 Khách đã chọn bé ${nameText} để chụp hình lúc <strong>${timeStr}</strong>;
-        }).filter(Boolean);
+          return `📸 Khách đã chọn bé ${nameText} để chụp hình lúc <strong>${timeStr}</strong>`;
+        }).filter(Boolean).reverse();
 
-        notificationBox.innerHTML = messages.length > 0
-          ? messages.reverse().map(msg => <div class="notification">${msg}</div><div class="divider">—</div>).join("")
-          : "📭 Không có thông tin hợp lệ để hiển thị.";
+        renderMessages(allMessages);
       });
     }
+
+    // Tìm kiếm theo tên
+    searchInput.addEventListener("input", () => {
+      const keyword = searchInput.value.toLowerCase();
+      const filtered = allMessages.filter(msg => msg.toLowerCase().includes(keyword));
+      renderMessages(filtered);
+    });
 
     loadNotifications();
   </script>
