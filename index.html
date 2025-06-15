@@ -229,36 +229,22 @@
     }
 
     function loadNotifications() {
-      db.ref("photoRequests").limitToLast(10).on("value", snapshot => {
+      db.ref("photoRequests").limitToLast(1).on("value", snapshot => {
         const data = snapshot.val();
         if (!data) {
           notificationBox.innerHTML = "📭 Chưa có thông báo nào.";
           return;
         }
 
-        let html = "🔔 <strong>THÔNG BÁO:</strong><br>";
-        const list = Object.values(data);
-        const allMessages = [];
+        const latestRequest = Object.values(data)[0];
 
-        list.forEach(item => {
-          const time = item.time || item.timestamp || "không rõ thời gian";
-          let dogNames = [];
+        const time = latestRequest.time || latestRequest.timestamp || "không rõ thời gian";
+        let dogName = latestRequest.dog || (Array.isArray(latestRequest.selectedDogs) ? latestRequest.selectedDogs[0] : null);
 
-          if (item.dog) dogNames.push(item.dog);
-          if (Array.isArray(item.selectedDogs)) {
-            dogNames = dogNames.concat(item.selectedDogs.filter(name => !!name));
-          }
-
-          if (dogNames.length > 0) {
-            const formattedNames = dogNames.join(", ");
-            allMessages.push(`📸 Khách vừa chọn các bé <strong>${formattedNames}</strong> lúc <strong>${time}</strong>`);
-          }
-        });
-
-        if (allMessages.length === 0) {
-          notificationBox.innerHTML = "📭 Không có thông tin hợp lệ để hiển thị.";
+        if (dogName) {
+          notificationBox.innerHTML = `📸 Khách vừa chọn <strong>${dogName}</strong> để chụp hình vào lúc <strong>${time}</strong>`;
         } else {
-          notificationBox.innerHTML = html + allMessages.reverse().join("<br>—<br>");
+          notificationBox.innerHTML = "📭 Không có thông tin hợp lệ để hiển thị.";
         }
       });
     }
