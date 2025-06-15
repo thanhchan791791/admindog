@@ -77,7 +77,6 @@
     .delete-btn { background: #f44336; }
     .toggle-btn { background: #ff9800; }
 
-    /* Form */
     .modal {
       display: none;
       position: fixed;
@@ -217,9 +216,7 @@
           <td>
             <button class="action edit-btn" onclick="editDog('${id}')">✏️</button>
             <button class="action delete-btn" onclick="deleteDog('${id}')">🗑️</button>
-            <button class="action toggle-btn" onclick="toggleStatus('${id}', '${dog.status}')">
-              🔁
-            </button>
+            <button class="action toggle-btn" onclick="toggleStatus('${id}', '${dog.status}')">🔁</button>
           </td>
         `;
         tableBody.appendChild(tr);
@@ -284,11 +281,18 @@
       db.ref("photoRequest").on("value", snapshot => {
         const data = snapshot.val() || {};
         photoBody.innerHTML = "";
+
+        const grouped = {}; // {time: [name1, name2,...]}
         Object.values(data).forEach(entry => {
+          if (!grouped[entry.time]) grouped[entry.time] = [];
+          grouped[entry.time].push(entry.name);
+        });
+
+        Object.entries(grouped).forEach(([time, names]) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${entry.name}</td>
-            <td>${entry.time}</td>
+            <td>${names.join(", ")}</td>
+            <td>${time}</td>
           `;
           photoBody.appendChild(tr);
         });
